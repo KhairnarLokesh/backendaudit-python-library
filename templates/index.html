@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>backend-audit | Local Security Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Dashboard Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <span class="shield-icon">🛡️</span>
+                <div class="logo-text">
+                    <h1>backend-audit</h1>
+                    <p>Local Security & Code Quality Scanner</p>
+                </div>
+            </div>
+            <div class="privacy-badge">
+                <span class="lock-icon">🔒</span>
+                <span>100% Local AST Engine (Offline)</span>
+            </div>
+        </header>
+
+        <!-- Metric Dashboard Grid -->
+        <section class="metric-section">
+            <div class="metric-card border-glow-blue">
+                <p class="metric-title">FILES SCANNED</p>
+                <h2 id="metric-files" class="metric-value">0</h2>
+            </div>
+            <div class="metric-card border-glow-red" id="card-total-bugs">
+                <p class="metric-title">TOTAL VULNERABILITIES</p>
+                <h2 id="metric-bugs" class="metric-value text-red">0</h2>
+            </div>
+            <div class="metric-card border-glow-orange" id="card-critical-bugs">
+                <p class="metric-title">CRITICAL ISSUES</p>
+                <h2 id="metric-critical" class="metric-value text-orange">0</h2>
+            </div>
+            <div class="metric-card border-glow-green">
+                <p class="metric-title">SCAN LATENCY</p>
+                <h2 id="metric-latency" class="metric-value text-green">0.0000s</h2>
+            </div>
+        </section>
+
+        <!-- Main Workspace split -->
+        <main class="workspace-section">
+            <!-- Left Workspace: Code Editor -->
+            <div class="panel editor-panel">
+                <div class="panel-header">
+                    <div class="tab-selectors">
+                        <span class="tab-title">📂 Sandbox Code Editor</span>
+                    </div>
+                    <div class="template-selector">
+                        <label for="template-select">Templates:</label>
+                        <select id="template-select" class="custom-select">
+                            <option value="flask">Flask Application</option>
+                            <option value="fastapi">FastAPI Application</option>
+                            <option value="django">Django View</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="editor-container">
+                    <div class="line-numbers" id="line-numbers"></div>
+                    <textarea id="code-editor" spellcheck="false" placeholder="Write or paste your Python code here..."></textarea>
+                </div>
+
+                <div class="panel-footer">
+                    <div class="framework-select-container">
+                        <label for="framework-select">Target Framework Rules:</label>
+                        <select id="framework-select" class="custom-select">
+                            <option value="flask">Flask</option>
+                            <option value="fastapi">FastAPI</option>
+                            <option value="django">Django</option>
+                        </select>
+                    </div>
+                    <button id="scan-btn" class="glowing-btn">
+                        <span class="lock-small">🔒</span> RUN LOCAL AUDIT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Workspace: Findings Console -->
+            <div class="panel console-panel">
+                <div class="panel-header">
+                    <span class="tab-title">🛡️ Security & REST Findings Console</span>
+                </div>
+                
+                <div class="console-scrollable" id="findings-container">
+                    <!-- Default Screen -->
+                    <div class="welcome-screen">
+                        <span class="welcome-shield">🛡️</span>
+                        <h3>Ready for Local Analysis</h3>
+                        <p>Write your code or select a pre-populated framework template, then click <strong>"Run Local Audit"</strong> to inspect your AST pipeline.</p>
+                        <div class="safety-reassurance">
+                            <p>🔒 <strong>Zero Cloud Exposure:</strong> All analysis runs fully offline inside your browser-connected local Python server.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

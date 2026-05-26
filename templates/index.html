@@ -5,107 +5,714 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>backend-audit | Local Security Dashboard</title>
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.2);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-glow: rgba(6, 182, 212, 0.2);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            
+            /* Severity Colors */
+            --critical: #ef4444;
+            --critical-glow: rgba(239, 68, 68, 0.15);
+            --high: #f97316;
+            --high-glow: rgba(249, 115, 22, 0.15);
+            --medium: #eab308;
+            --medium-glow: rgba(234, 179, 8, 0.15);
+            --low: #06b6d4;
+            --low-glow: rgba(6, 182, 212, 0.15);
+            
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .header-content {
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-icon {
+            color: var(--primary);
+            background: var(--primary-glow);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            -webkit-text-fill-color: initial;
+        }
+
+        .badge-local {
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .pulse {
+            width: 6px;
+            height: 6px;
+            background-color: #4ade80;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #4ade80;
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+
+        main {
+            padding: 3rem 0;
+        }
+
+        /* Config Panel */
+        .config-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(8px);
+            margin-bottom: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .config-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .input-text {
+            width: 100%;
+            background: rgba(17, 24, 39, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .input-text:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .select-framework {
+            background: rgba(17, 24, 39, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-family: inherit;
+            min-width: 180px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .select-framework:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-scan {
+            background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-scan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-scan:active {
+            transform: translateY(0);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .stat-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .stat-value.critical { color: var(--critical); }
+        .stat-value.high { color: var(--high); }
+        .stat-value.medium { color: var(--medium); }
+        .stat-value.low { color: var(--low); }
+
+        .stat-glow {
+            position: absolute;
+            bottom: -20px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            filter: blur(30px);
+            opacity: 0.15;
+        }
+
+        .stat-glow.critical { background: var(--critical); }
+        .stat-glow.high { background: var(--high); }
+        .stat-glow.medium { background: var(--medium); }
+        .stat-glow.low { background: var(--low); }
+
+        /* Findings List */
+        .findings-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .findings-count {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .finding-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.75rem;
+            transition: var(--transition);
+            backdrop-filter: blur(8px);
+            position: relative;
+        }
+
+        .finding-item:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .finding-item.critical { border-left: 4px solid var(--critical); }
+        .finding-item.high { border-left: 4px solid var(--high); }
+        .finding-item.medium { border-left: 4px solid var(--medium); }
+        .finding-item.low { border-left: 4px solid var(--low); }
+
+        .finding-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .severity-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .severity-badge.critical { background: var(--critical-glow); color: var(--critical); }
+        .severity-badge.high { background: var(--high-glow); color: var(--high); }
+        .severity-badge.medium { background: var(--medium-glow); color: var(--medium); }
+        .severity-badge.low { background: var(--low-glow); color: var(--low); }
+
+        .rule-id-badge {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .finding-location {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .finding-message {
+            font-size: 1.15rem;
+            font-weight: 500;
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+        }
+
+        /* Code Snippet block */
+        .code-container {
+            background: #060911;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #d1d5db;
+            overflow-x: auto;
+            margin-bottom: 1.25rem;
+            line-height: 1.6;
+        }
+
+        .code-line {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .code-num {
+            color: rgba(255, 255, 255, 0.2);
+            text-align: right;
+            user-select: none;
+            width: 30px;
+        }
+
+        .code-content {
+            white-space: pre;
+        }
+
+        .code-highlight {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border-left: 2px solid var(--critical);
+            padding-left: 0.5rem;
+            width: 100%;
+        }
+
+        /* Fix Suggestion card */
+        .fix-container {
+            background: rgba(34, 197, 94, 0.04);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            border-radius: 10px;
+            padding: 1.25rem;
+        }
+
+        .fix-title {
+            color: #4ade80;
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .fix-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #a7f3d0;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        /* Loader */
+        .loader-wrapper {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 0;
+            gap: 1.5rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 5rem 2rem;
+            border: 1px dashed var(--border-color);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .empty-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Dashboard Header -->
-        <header class="app-header">
-            <div class="header-logo">
-                <span class="shield-icon">🛡️</span>
-                <div class="logo-text">
-                    <h1>backend-audit</h1>
-                    <p>Local Security & Code Quality Scanner</p>
+
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    backend-audit
+                </div>
+                <div class="badge-local">
+                    <div class="pulse"></div>
+                    100% Offline Data Privacy Locked
                 </div>
             </div>
-            <div class="privacy-badge">
-                <span class="lock-icon">🔒</span>
-                <span>100% Local AST Engine (Offline)</span>
-            </div>
-        </header>
+        </div>
+    </header>
 
-        <!-- Metric Dashboard Grid -->
-        <section class="metric-section">
-            <div class="metric-card border-glow-blue">
-                <p class="metric-title">FILES SCANNED</p>
-                <h2 id="metric-files" class="metric-value">0</h2>
+    <main class="container">
+        <!-- Configuration Control Panel -->
+        <section class="config-card">
+            <div class="config-title">
+                🔍 Project Scan Configuration
             </div>
-            <div class="metric-card border-glow-red" id="card-total-bugs">
-                <p class="metric-title">TOTAL VULNERABILITIES</p>
-                <h2 id="metric-bugs" class="metric-value text-red">0</h2>
-            </div>
-            <div class="metric-card border-glow-orange" id="card-critical-bugs">
-                <p class="metric-title">CRITICAL ISSUES</p>
-                <h2 id="metric-critical" class="metric-value text-orange">0</h2>
-            </div>
-            <div class="metric-card border-glow-green">
-                <p class="metric-title">SCAN LATENCY</p>
-                <h2 id="metric-latency" class="metric-value text-green">0.0000s</h2>
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <input type="text" id="scanPath" class="input-text" placeholder="Project root directory path (e.g. . or app/)" value=".">
+                </div>
+                <select id="frameworkOverride" class="select-framework">
+                    <option value="">Auto-Detect Framework</option>
+                    <option value="flask">Flask</option>
+                    <option value="fastapi">FastAPI</option>
+                    <option value="django">Django</option>
+                    <option value="sanic">Sanic</option>
+                    <option value="plain">Plain Python</option>
+                </select>
+                <button onclick="executeScan()" class="btn-scan">
+                    <span>⚡ Run Security Scan</span>
+                </button>
             </div>
         </section>
 
-        <!-- Main Workspace split -->
-        <main class="workspace-section">
-            <!-- Left Workspace: Code Editor -->
-            <div class="panel editor-panel">
-                <div class="panel-header">
-                    <div class="tab-selectors">
-                        <span class="tab-title">📂 Sandbox Code Editor</span>
-                    </div>
-                    <div class="template-selector">
-                        <label for="template-select">Templates:</label>
-                        <select id="template-select" class="custom-select">
-                            <option value="flask">Flask Application</option>
-                            <option value="fastapi">FastAPI Application</option>
-                            <option value="django">Django View</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="editor-container">
-                    <div class="line-numbers" id="line-numbers"></div>
-                    <textarea id="code-editor" spellcheck="false" placeholder="Write or paste your Python code here..."></textarea>
-                </div>
+        <!-- Stats Overview Row -->
+        <section class="stats-grid" id="statsGrid" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-title">Critical Threats</div>
+                <div class="stat-value critical" id="statCritical">0</div>
+                <div class="stat-glow critical"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">High Threats</div>
+                <div class="stat-value high" id="statHigh">0</div>
+                <div class="stat-glow high"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Medium Warnings</div>
+                <div class="stat-value medium" id="statMedium">0</div>
+                <div class="stat-glow medium"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Low Compliance</div>
+                <div class="stat-value low" id="statLow">0</div>
+                <div class="stat-glow low"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Framework</div>
+                <div class="stat-value" id="statFramework" style="font-size: 1.5rem; padding-top: 0.5rem; text-transform: uppercase;">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Files Scanned</div>
+                <div class="stat-value" id="statFiles" style="font-size: 2rem;">0</div>
+            </div>
+        </section>
 
-                <div class="panel-footer">
-                    <div class="framework-select-container">
-                        <label for="framework-select">Target Framework Rules:</label>
-                        <select id="framework-select" class="custom-select">
-                            <option value="flask">Flask</option>
-                            <option value="fastapi">FastAPI</option>
-                            <option value="django">Django</option>
-                        </select>
-                    </div>
-                    <button id="scan-btn" class="glowing-btn">
-                        <span class="lock-small">🔒</span> RUN LOCAL AUDIT
-                    </button>
+        <!-- Loader -->
+        <div class="loader-wrapper" id="scanLoader">
+            <div class="spinner"></div>
+            <p style="color: var(--text-muted);">Compiling AST/CST trees and traversing security rules locally...</p>
+        </div>
+
+        <!-- Findings List -->
+        <section class="findings-section" id="findingsSection">
+            <div class="empty-state" id="emptyState">
+                <div class="empty-title">Ready to Scan</div>
+                <div class="empty-desc">Enter a local project path above and click Scan to begin auditing code locally.</div>
+            </div>
+            
+            <div id="findingsContainer" style="display: none;">
+                <div class="section-header">
+                    <h2 class="section-title">Scan Findings</h2>
+                    <div class="findings-count" id="findingsCount">0 issues found</div>
+                </div>
+                <div id="findingsList" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <!-- Finding items injected here dynamically -->
                 </div>
             </div>
+        </section>
+    </main>
 
-            <!-- Right Workspace: Findings Console -->
-            <div class="panel console-panel">
-                <div class="panel-header">
-                    <span class="tab-title">🛡️ Security & REST Findings Console</span>
-                </div>
-                
-                <div class="console-scrollable" id="findings-container">
-                    <!-- Default Screen -->
-                    <div class="welcome-screen">
-                        <span class="welcome-shield">🛡️</span>
-                        <h3>Ready for Local Analysis</h3>
-                        <p>Write your code or select a pre-populated framework template, then click <strong>"Run Local Audit"</strong> to inspect your AST pipeline.</p>
-                        <div class="safety-reassurance">
-                            <p>🔒 <strong>Zero Cloud Exposure:</strong> All analysis runs fully offline inside your browser-connected local Python server.</p>
+    <script>
+        async function executeScan() {
+            const path = document.getElementById("scanPath").value;
+            const framework = document.getElementById("frameworkOverride").value;
+
+            // UI Transitions
+            document.getElementById("emptyState").style.display = "none";
+            document.getElementById("findingsContainer").style.display = "none";
+            document.getElementById("statsGrid").style.display = "none";
+            document.getElementById("scanLoader").style.display = "flex";
+
+            try {
+                const response = await fetch("/api/scan", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ path, framework })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Local backend dashboard server returned an error.");
+                }
+
+                const report = await response.json();
+                renderReport(report);
+
+            } catch (error) {
+                alert("Error during scan: " + error.message);
+                document.getElementById("emptyState").style.display = "block";
+            } finally {
+                document.getElementById("scanLoader").style.display = "none";
+            }
+        }
+
+        function renderReport(report) {
+            // Summary tallies
+            let tallies = { critical: 0, high: 0, medium: 0, low: 0 };
+            
+            // Populate findings
+            const container = document.getElementById("findingsList");
+            container.innerHTML = "";
+
+            if (!report.findings || report.findings.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="border-style: solid; border-color: rgba(34, 197, 94, 0.2); background: rgba(34, 197, 94, 0.02);">
+                        <div class="empty-title" style="color: #4ade80;">[OK] No Issues Detected!</div>
+                        <div class="empty-desc">Your code satisfies all offline backend security, error handling, and REST validation rules. Excellent job!</div>
+                    </div>
+                `;
+            } else {
+                report.findings.forEach(finding => {
+                    const sev = finding.severity.toLowerCase();
+                    if (sev in tallies) tallies[sev]++;
+
+                    // Render code snippets safely
+                    let codeHtml = "";
+                    if (finding.code_snippet) {
+                        const lines = finding.code_snippet.split("\n");
+                        const renderedLines = lines.map(line => {
+                            // Extract line number e.g. "12: > code"
+                            const match = line.match(/^(\s*\d+):\s*(>?)\s*(.*)$/);
+                            if (match) {
+                                const num = match[1];
+                                const isTarget = match[2] === ">";
+                                const code = match[3];
+                                return `
+                                    <div class="code-line ${isTarget ? 'code-highlight' : ''}">
+                                        <span class="code-num">${num}</span>
+                                        <span class="code-content">${escapeHtml(code)}</span>
+                                    </div>
+                                `;
+                            }
+                            return `<div class="code-line"><span class="code-content">${escapeHtml(line)}</span></div>`;
+                        }).join("");
+
+                        codeHtml = `<div class="code-container">${renderedLines}</div>`;
+                    }
+
+                    // Render suggested fix
+                    let fixHtml = "";
+                    if (finding.suggested_fix) {
+                        fixHtml = `
+                            <div class="fix-container">
+                                <div class="fix-title">💡 Suggested Fix</div>
+                                <div class="fix-code">${escapeHtml(finding.suggested_fix)}</div>
+                            </div>
+                        `;
+                    }
+
+                    const card = document.createElement("div");
+                    card.className = `finding-item ${sev}`;
+                    card.innerHTML = `
+                        <div class="finding-meta">
+                            <span class="severity-badge ${sev}">${finding.severity}</span>
+                            <span class="rule-id-badge">${finding.rule_id}</span>
+                            <span class="finding-location">📍 ${finding.file_path}:${finding.line}:${finding.column}</span>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
+                        <div class="finding-message">${escapeHtml(finding.message)}</div>
+                        ${codeHtml}
+                        ${fixHtml}
+                    `;
+                    container.appendChild(card);
+                });
+            }
 
-    <script src="/static/app.js"></script>
+            // Stats Update
+            document.getElementById("statCritical").innerText = tallies.critical;
+            document.getElementById("statHigh").innerText = tallies.high;
+            document.getElementById("statMedium").innerText = tallies.medium;
+            document.getElementById("statLow").innerText = tallies.low;
+            
+            document.getElementById("statFramework").innerText = report.framework_detected || "unknown";
+            document.getElementById("statFiles").innerText = report.scanned_files ? report.scanned_files.length : 0;
+
+            // Unhide Dashboard Panel
+            document.getElementById("statsGrid").style.display = "grid";
+            document.getElementById("findingsCount").innerText = `${report.findings ? report.findings.length : 0} issues found in ${report.scan_time_seconds || 0}s`;
+            document.getElementById("findingsContainer").style.display = "block";
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
 </body>
 </html>

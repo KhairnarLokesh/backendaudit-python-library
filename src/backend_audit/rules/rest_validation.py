@@ -78,6 +78,15 @@ HTTP_STATUS_DESCRIPTIONS = {
     511: "511 - Network Authentication Required"
 }
 
+HTTP_STATUS_EXPLANATIONS = {
+    400: "Bad Request - The server cannot process the request due to client-side input validation errors, malformed syntax, or invalid payload structure.",
+    401: "Unauthorized - Authentication is required and has failed or has not yet been provided (e.g. missing or invalid JWT/API token).",
+    403: "Forbidden - The client is authenticated but does not have permission to access the requested resource (e.g. insufficient roles or admin privileges).",
+    404: "Not Found - The server cannot find the requested resource or entity (e.g. record does not exist in the database).",
+    500: "Internal Server Error - The server encountered an unexpected condition or caught exception that prevented it from fulfilling the request.",
+    503: "Service Unavailable - The server is temporarily unable to handle the request due to maintenance or overload."
+}
+
 class RestValidationRule(BaseRule):
     def __init__(self):
         super().__init__(
@@ -175,13 +184,13 @@ class RestValidationRule(BaseRule):
                 if isinstance(exc, ast.Call) and isinstance(exc.func, ast.Name) and exc.func.id in ["HTTPException", "APIException"]:
                     status_code = None
                     if exc.args:
-                        if isinstance(exc.args[0], ast.Constant) and isinstance(exc.args[0].value, int):
+                        if isinstance(exc.args[0], ast.Constant) and isinstance(exc.args[0].value, int) and not isinstance(exc.args[0].value, bool):
                             status_code = exc.args[0].value
                     for kw in exc.keywords:
-                        if kw.arg == "status_code" and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, int):
+                        if kw.arg == "status_code" and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, int) and not isinstance(kw.value.value, bool):
                             status_code = kw.value.value
                             
-                    if status_code is not None:
+                    if status_code is not None and 100 <= status_code <= 599:
                         status_desc = HTTP_STATUS_DESCRIPTIONS.get(status_code, f"{status_code} - Custom/Other")
                         snippet = self.rule.get_line_snippet(code, node.lineno)
                         self.findings.append(Finding(
@@ -211,7 +220,7 @@ class RestValidationRule(BaseRule):
                     self.findings.append(Finding(
                         rule_id="error-response-status-200",
                         severity="high",
-                        message=f"HTTP status {status_desc_200} returned inside an error/catch block. Error responses must return an appropriate error status code like {status_desc_500}.",
+                        message=f"HTTP status {status_desc_200} returned inside an error/catch block. Error responses must return an appropriate error status code like {status_desc_500} ({HTTP_STATUS_EXPLANATIONS[500]}).",
                         file_path=file_path,
                         line=line_no,
                         column=0,
@@ -247,7 +256,7 @@ class RestValidationRule(BaseRule):
                     self.findings.append(Finding(
                         rule_id=rule_name,
                         severity="high" if check_type == "auth" else "medium",
-                        message=f"{check_type.capitalize()} failure for '{var_name}' (checked at Line {trigger_line}) returns HTTP status {current_desc} instead of {target_desc}.",
+                        message=f"{check_type.capitalize()} failure for '{var_name}' (checked at Line {trigger_line}) returns HTTP status {current_desc} instead of {target_desc}. Meaning: {HTTP_STATUS_EXPLANATIONS.get(target_code, '')}",
                         file_path=file_path,
                         line=action_line,
                         column=0,
@@ -288,10 +297,11 @@ class RestValidationRule(BaseRule):
                 found_desc = HTTP_STATUS_DESCRIPTIONS.get(found, f"{found} - Unknown")
                 
                 snippet = self.rule.get_line_snippet(code, line)
+                expected_explanation = HTTP_STATUS_EXPLANATIONS.get(expected, "")
                 self.findings.append(Finding(
                     rule_id=f"rest-incorrect-status-{expected}",
                     severity="medium",
-                    message=f"{check_type.capitalize()} failure for '{var_name}' (checked at Line {trigger_line}) raises HTTP status {found_desc} instead of {expected_desc}.",
+                    message=f"{check_type.capitalize()} failure for '{var_name}' (checked at Line {trigger_line}) raises HTTP status {found_desc} instead of {expected_desc}. Meaning: {expected_explanation}",
                     file_path=file_path,
                     line=line,
                     column=0,
@@ -308,19 +318,22 @@ class RestValidationRule(BaseRule):
                 if isinstance(val_node, ast.Tuple):
                     if len(val_node.elts) >= 2:
                         last_elt = val_node.elts[-1]
-                        if isinstance(last_elt, ast.Constant) and isinstance(last_elt.value, int):
-                            return last_elt.value, True
+                        if isinstance(last_elt, ast.Constant) and isinstance(last_elt.value, int) and not isinstance(last_elt.value, bool):
+                            if last_elt.value in HTTP_STATUS_DESCRIPTIONS:
+                                return last_elt.value, True
 
                 # B. Call expression: JsonResponse(..., status=400) or Response(..., status_code=400)
                 if isinstance(val_node, ast.Call):
                     # Check keywords
                     for kw in val_node.keywords:
-                        if kw.arg in ["status", "status_code"] and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, int):
-                            return kw.value.value, True
+                        if kw.arg in ["status", "status_code"] and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, int) and not isinstance(kw.value.value, bool):
+                            if kw.value.value in HTTP_STATUS_DESCRIPTIONS:
+                                return kw.value.value, True
 
                 # C. Constant integer (direct response)
-                if isinstance(val_node, ast.Constant) and isinstance(val_node.value, int):
-                    return val_node.value, True
+                if isinstance(val_node, ast.Constant) and isinstance(val_node.value, int) and not isinstance(val_node.value, bool):
+                    if val_node.value in HTTP_STATUS_DESCRIPTIONS:
+                        return val_node.value, True
 
                 return None, False
 

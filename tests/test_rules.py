@@ -33,6 +33,11 @@ def test_flask_app_audit():
     ignored_findings = [f for f in report.findings if "SAFE_SECRET" in f.code_snippet]
     assert len(ignored_findings) == 0
 
+    # Verify status code meanings are present in rest findings
+    rest_findings = [f for f in report.findings if f.rule_id == "rest-missing-status-404"]
+    assert len(rest_findings) > 0
+    assert "Meaning: Not Found -" in rest_findings[0].message
+
 def test_fastapi_app_audit():
     sample_dir = Path(__file__).parent / "sample_apps"
     fastapi_file = sample_dir / "fastapi_app.py"
@@ -79,3 +84,31 @@ def test_http_status_descriptions():
                  505, 506, 507, 508, 510, 511]:
         assert code in HTTP_STATUS_DESCRIPTIONS
         assert HTTP_STATUS_DESCRIPTIONS[code].startswith(str(code))
+
+def test_ignore_boolean_and_out_of_range_statuses():
+    import ast
+    from backend_audit.rules.rest_validation import RestValidationRule
+    
+    rule = RestValidationRule()
+    # Mock visitor run
+    code = """
+def my_func():
+    return True
+def my_func2():
+    return False
+def my_func3():
+    return 0
+def my_func4():
+    return 1
+def my_func5():
+    return 130
+def my_func6():
+    return 200
+"""
+    tree = ast.parse(code)
+    findings = rule.run(tree, code, "dummy.py", set(), "flask")
+    
+    # We should only find status 200
+    catalog_findings = [f for f in findings if f.rule_id == "rest-status-code-catalog"]
+    assert len(catalog_findings) == 1
+    assert "200 - OK" in catalog_findings[0].message

@@ -52,3 +52,30 @@ def test_fastapi_app_audit():
     assert "rest-missing-status-404" in rule_ids
     assert "unprotected-route" in rule_ids
     assert "rest-missing-status-401" in rule_ids
+
+def test_http_status_descriptions():
+    from backend_audit.rules.rest_validation import HTTP_STATUS_DESCRIPTIONS
+    
+    # Test checking specific standard codes across groups
+    assert HTTP_STATUS_DESCRIPTIONS[100] == "100 - Continue"
+    assert HTTP_STATUS_DESCRIPTIONS[200] == "200 - OK"
+    assert HTTP_STATUS_DESCRIPTIONS[201] == "201 - Created"
+    assert HTTP_STATUS_DESCRIPTIONS[301] == "301 - Moved Permanently"
+    assert HTTP_STATUS_DESCRIPTIONS[302] == "302 - Found"
+    assert HTTP_STATUS_DESCRIPTIONS[400] == "400 - Bad Request"
+    assert HTTP_STATUS_DESCRIPTIONS[401] == "401 - Unauthorized"
+    assert HTTP_STATUS_DESCRIPTIONS[403] == "403 - Forbidden"
+    assert HTTP_STATUS_DESCRIPTIONS[404] == "404 - Not Found"
+    assert HTTP_STATUS_DESCRIPTIONS[405] == "405 - Method Not Allowed"
+    assert HTTP_STATUS_DESCRIPTIONS[429] == "429 - Too Many Requests"
+    assert HTTP_STATUS_DESCRIPTIONS[500] == "500 - Internal Server Error"
+    assert HTTP_STATUS_DESCRIPTIONS[503] == "503 - Service Unavailable"
+
+    # Verify standard range is populated
+    for code in [100, 101, 102, 103, 200, 201, 202, 203, 204, 205, 206, 207, 208, 226,
+                 300, 301, 302, 303, 304, 305, 307, 308, 400, 401, 402, 403, 404, 405,
+                 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 421,
+                 422, 423, 424, 425, 426, 428, 429, 431, 451, 500, 501, 502, 503, 504,
+                 505, 506, 507, 508, 510, 511]:
+        assert code in HTTP_STATUS_DESCRIPTIONS
+        assert HTTP_STATUS_DESCRIPTIONS[code].startswith(str(code))

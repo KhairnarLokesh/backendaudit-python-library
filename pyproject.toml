@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
-    { name = "Antigravity Developer", email = "antigravity@google.com" }
+    { name = "Lokesh Khairnar", email = "lkhairnar580@gmail.com" }
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

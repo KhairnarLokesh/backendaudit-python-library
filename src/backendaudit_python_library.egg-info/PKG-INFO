@@ -1,5 +1,5 @@
 Metadata-Version: 2.4
-Name: backend-audit
+Name: backendaudit-python-library
 Version: 1.0.0
 Summary: Local offline backend security, error handling, and code quality auditing tool for Python applications
 Author-email: Lokesh Khairnar <lkhairnar580@gmail.com>

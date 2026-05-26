@@ -1,0 +1,2 @@
+[console_scripts]
+backend-audit = backend_audit.cli:app

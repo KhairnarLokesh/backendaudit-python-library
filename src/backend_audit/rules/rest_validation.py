@@ -89,6 +89,47 @@ class RestValidationRule(BaseRule):
                             self.check_conditional_raise(stmt, node.lineno, stmt.lineno, check_type, checked_var)
                 self.generic_visit(node)
 
+            def visit_Return(self, node: ast.Return):
+                status_code, has_explicit = self.extract_status_code(node.value)
+                if status_code is not None:
+                    status_desc = HTTP_STATUS_DESCRIPTIONS.get(status_code, f"{status_code} - Custom/Other")
+                    snippet = self.rule.get_line_snippet(code, node.lineno)
+                    self.findings.append(Finding(
+                        rule_id="rest-status-code-catalog",
+                        severity="low",
+                        message=f"API returns HTTP status: {status_desc}",
+                        file_path=file_path,
+                        line=node.lineno,
+                        column=node.col_offset,
+                        code_snippet=snippet
+                    ))
+                self.generic_visit(node)
+
+            def visit_Raise(self, node: ast.Raise):
+                exc = node.exc
+                if isinstance(exc, ast.Call) and isinstance(exc.func, ast.Name) and exc.func.id in ["HTTPException", "APIException"]:
+                    status_code = None
+                    if exc.args:
+                        if isinstance(exc.args[0], ast.Constant) and isinstance(exc.args[0].value, int):
+                            status_code = exc.args[0].value
+                    for kw in exc.keywords:
+                        if kw.arg == "status_code" and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, int):
+                            status_code = kw.value.value
+                            
+                    if status_code is not None:
+                        status_desc = HTTP_STATUS_DESCRIPTIONS.get(status_code, f"{status_code} - Custom/Other")
+                        snippet = self.rule.get_line_snippet(code, node.lineno)
+                        self.findings.append(Finding(
+                            rule_id="rest-status-code-catalog",
+                            severity="low",
+                            message=f"API raises HTTP status: {status_desc}",
+                            file_path=file_path,
+                            line=node.lineno,
+                            column=node.col_offset,
+                            code_snippet=snippet
+                        ))
+                self.generic_visit(node)
+
             def check_error_pathway_response(self, val_node: ast.AST, line_no: int, context: str):
                 """Flags returning implicit or explicit 200 OK in an error pathway/catch block."""
                 if line_no in ignored_lines:

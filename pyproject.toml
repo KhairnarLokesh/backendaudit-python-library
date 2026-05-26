@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "backendaudit-python-library"
-version = "1.0.1"
+version = "1.0.2"
 description = "Local offline backend security, error handling, and code quality auditing tool for Python applications"
 readme = "README.md"
 requires-python = ">=3.9"
